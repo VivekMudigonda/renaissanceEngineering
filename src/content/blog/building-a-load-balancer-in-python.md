@@ -1,11 +1,11 @@
 ---
 title: 'Building a Load Balancer in Python'
 description: 'Understanding how to build a simple HTTP load balancer with health checks and round-robin routing in Python.'
+author: 'Renaissance Engineer'
+readTime: '8 min read'
 pubDate: '2026-09-13'
-heroImage: '../../assets/blog-placeholder-1.jpg'
+heroImage: '../../assets/Renaissance-Main-Image.png'
 ---
-
-# Building a Load Balancer in Python
 
 Load balancers distribute incoming requests across multiple backend servers.
 

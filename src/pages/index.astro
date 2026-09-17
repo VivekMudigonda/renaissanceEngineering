@@ -1,7 +1,9 @@
 ---
+import { Image } from 'astro:assets';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import HeroImage from '../assets/Renaissance-Main-Image.png';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 ---
 
@@ -12,38 +14,33 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	</head>
 	<body>
 		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This template
-				serves as a lightweight, minimally-styled starting point for anyone looking to build a personal
-				website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to
-				<a href="https://docs.astro.build/">read the docs</a>
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
+		<main class="front-page">
+			<section class="front-grid">
+				<div class="front-copy">
+					<p class="eyebrow">A polymath's journal for builders<br />who follow every idea to its<br />edges</p>
+					<h2>Concepts without borders</h2>
+					<p class="intro">Renaissance Engineering is a journal about durable systems, clear thinking, and the beautiful burden of making things real.</p>
+				</div>
+				<figure class="front-figure">
+					<Image src={HeroImage} alt="A technical study of a measured arch" />
+					<figcaption><span>The Noah's Ark for Thoughts</span><span>North elevation</span></figcaption>
+				</figure>
+			</section>
 		</main>
 		<Footer />
 	</body>
+
+<style>
+	.front-page { max-width: var(--page-width); padding-top: 4.5rem; }
+	.front-grid { display: grid; grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.45fr); align-items: center; gap: clamp(2rem, 6vw, 6rem); padding: 2.5rem 0 3rem; }
+	.front-copy { padding-bottom: 0.4rem; }
+	.eyebrow { margin: 0 0 2rem; font-family: var(--font-mono); font-size: 0.66rem; line-height: 1.8; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-surface-variant); }
+	.front-copy h2 { margin: 0; font-family: var(--font-display); font-size: clamp(2.3rem, 4.4vw, 4rem); font-weight: 400; line-height: 0.9; letter-spacing: -0.06em; }
+	.intro { max-width: 22rem; margin: 2.5rem 0 0; font-family: var(--font-display); font-size: clamp(1.35rem, 2.2vw, 1.75rem); line-height: 1.25; }
+	.front-figure { position: relative; margin: 0; padding: 0.6rem; background: var(--surface-container); }
+	.front-figure::before { content: ''; position: absolute; inset: -0.5rem; border: 1px solid rgba(0, 0, 0, 0.65); pointer-events: none; }
+	.front-figure img { width: 100%; aspect-ratio: 1.55; object-fit: cover; mix-blend-mode: multiply; opacity: 0.8; }
+	.front-figure figcaption { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.2rem 0.1rem; font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; }
+	@media (max-width: 720px) { .front-page { padding-top: 2.4rem; } .front-grid { grid-template-columns: 1fr; padding-top: 2rem; } .front-copy h2 { font-size: clamp(2.3rem, 10vw, 3.5rem); } .thesis { margin-top: 2.5rem; } .front-figure { margin: 1rem 0.5rem 0; } .front-label, .front-footer { font-size: 0.52rem; } }
+</style>
 </html>
