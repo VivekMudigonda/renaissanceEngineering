@@ -1,12 +1,19 @@
 ---
 import { Image } from 'astro:assets';
 import { Icon } from 'astro-icon/components';
-import type { CollectionEntry } from 'astro:content';
+import type { ImageMetadata } from 'astro';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = {
+	title: string;
+	description: string;
+	author?: string;
+	readTime?: string;
+	pubDate: Date;
+	heroImage?: ImageMetadata;
+};
 
 const { title, description, author = 'Renaissance Engineer', readTime = '5 min read', pubDate, heroImage } = Astro.props;
 const formattedPubDate = new Intl.DateTimeFormat('en-US', {
@@ -21,7 +28,7 @@ const formattedPubDate = new Intl.DateTimeFormat('en-US', {
 	<body>
 		<Header compact />
 		<main class="article-page">
-			<article>
+			<article data-pagefind-body>
 				<header class="article-header">
 					<div class="article-heading">
 						<p class="article-kicker"><span aria-hidden="true"></span> Architecture of intelligence <b>/</b> Essay 014</p>

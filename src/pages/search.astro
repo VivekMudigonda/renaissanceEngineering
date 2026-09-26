@@ -1,0 +1,209 @@
+---
+import { getCollection } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import BaseHead from '../components/BaseHead.astro';
+import BlogArchiveItem from '../components/BlogArchiveItem.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE } from '../consts';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
+const searchPosts = posts.map((post) => ({
+	id: post.id,
+	title: post.data.title,
+	description: post.data.description,
+	date: new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).format(post.data.pubDate),
+	readTime: post.data.readTime,
+	tags: post.data.tags,
+}));
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Search | ${SITE_TITLE}`} description={`Search the ${SITE_TITLE} archive.`} />
+	</head>
+	<body data-pagefind-ignore>
+		<Header compact />
+		<main class="search-page">
+			<div class="search-topline">
+				<a class="close-link" href="/" aria-label="Close search">Close <Icon name="mdi:close" aria-hidden="true" /></a>
+			</div>
+			<section class="search-layout" aria-labelledby="search-title">
+				<div>
+					<p class="eyebrow" id="search-title">Search the journal</p>
+					<label class="search-input-wrap">
+						<Icon name="mdi:magnify" aria-hidden="true" />
+						<span class="sr-only">Search articles</span>
+						<input id="search-input" type="search" placeholder="Type to search" autocomplete="off" />
+					</label>
+					<div class="filter-group">
+						<p class="eyebrow">Filter by subject</p>
+						<div class="filters" id="filters">
+							<button class="filter is-active" type="button" data-tag="all" aria-pressed="true">All</button>
+							{tags.map((tag) => <button class="filter" type="button" data-tag={tag} aria-pressed="false">{tag}</button>)}
+						</div>
+					</div>
+				</div>
+				<aside class="archive-panel" aria-label="Search results">
+					<div id="results" class="results archive-list" aria-live="polite">
+						{posts.map((post, index) => (
+							<BlogArchiveItem
+								id={post.id}
+								index={index + 1}
+								title={post.data.title}
+								date={new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).format(post.data.pubDate)}
+							/>
+						))}
+						<p class="empty-state" id="empty-state" hidden>No articles match that search.</p>
+					</div>
+				</aside>
+			</section>
+		</main>
+		<script type="application/json" id="search-data" set:html={JSON.stringify(searchPosts)}></script>
+		<script>
+			type SearchPost = { id: string; title: string; description: string; date: string; readTime: string; tags: string[] };
+			type PagefindModule = { init?: () => Promise<void>; search: (query: string) => Promise<{ results: { data: () => Promise<{ url: string }> }[] }> };
+			const dataElement = document.querySelector('#search-data');
+			const input = document.querySelector<HTMLInputElement>('#search-input');
+			const results = document.querySelector<HTMLElement>('#results');
+			const filters = document.querySelector<HTMLElement>('#filters');
+			const emptyState = document.querySelector<HTMLElement>('#empty-state');
+			if (!input || !results || !filters || !emptyState) throw new Error('Search controls are unavailable.');
+			const posts: SearchPost[] = JSON.parse(dataElement?.textContent || '[]');
+			const pageSize = 5;
+			const rows = new Map([...results.querySelectorAll<HTMLElement>('[data-post-id]')].map((row) => [row.dataset.postId, row]));
+			let observer: IntersectionObserver | undefined;
+			const sentinel = document.createElement('div');
+			sentinel.className = 'load-sentinel';
+			sentinel.setAttribute('aria-hidden', 'true');
+			const selectedTags = new Set<string>();
+			const availableTags = new Set([...filters.querySelectorAll<HTMLButtonElement>('[data-tag]')].map((button) => button.dataset.tag));
+			const syncFilters = () => {
+				filters.querySelectorAll<HTMLButtonElement>('[data-tag]').forEach((button) => {
+					const isSelected = button.dataset.tag === 'all' ? selectedTags.size === 0 : selectedTags.has(button.dataset.tag ?? '');
+					button.classList.toggle('is-active', isSelected);
+					button.setAttribute('aria-pressed', String(isSelected));
+				});
+			};
+			const loadPagefind = async (): Promise<PagefindModule | undefined> => {
+				try {
+					const pagefind: PagefindModule = await import(new URL('/pagefind/pagefind.js', window.location.origin).href);
+					await pagefind.init?.();
+					return pagefind;
+				} catch (error) {
+					console.warn('Pagefind index is unavailable. Run npm run build to generate it.', error);
+					return undefined;
+				}
+			};
+			const pagefind = await loadPagefind();
+			const postIdFromUrl = (url: string) => {
+				const path = new URL(url, window.location.origin).pathname.replace(/\/index\.html$/, '/');
+				const match = path.match(/^\/blog\/([^/]+)\/?$/);
+				return match?.[1];
+			};
+			const searchPosts = async (query: string) => {
+				if (!query) return posts;
+				if (!pagefind) {
+					const needle = query.toLowerCase();
+					return posts.filter((post) => `${post.title} ${post.description} ${post.tags.join(' ')}`.toLowerCase().includes(needle));
+				}
+				const search = await pagefind.search(query);
+				const found = await Promise.all(search.results.map((result) => result.data()));
+				const postsById = new Map(posts.map((post) => [post.id, post]));
+				return found.map((result) => postsById.get(postIdFromUrl(result.url) ?? '')).filter((post): post is SearchPost => Boolean(post));
+			};
+			const render = async () => {
+				const query = input.value.trim();
+				const searched = await searchPosts(query);
+				const matchingPosts = searched.filter((post) => selectedTags.size === 0 || [...selectedTags].every((tag) => post.tags.includes(tag)));
+				observer?.disconnect();
+				sentinel.remove();
+				emptyState.hidden = matchingPosts.length > 0;
+				matchingPosts.forEach((post, index) => {
+					const row = rows.get(post.id);
+					if (!row) return;
+					row.hidden = index >= pageSize;
+					results.append(row);
+				});
+				rows.forEach((row, id) => {
+					if (!matchingPosts.some((post) => post.id === id)) row.hidden = true;
+				});
+				if (matchingPosts.length > pageSize) {
+					results.append(sentinel);
+					observer = new IntersectionObserver(([entry]) => {
+						if (!entry.isIntersecting) return;
+						const loaded = matchingPosts.filter((post) => !rows.get(post.id)?.hidden).length;
+						matchingPosts.slice(loaded, loaded + pageSize).forEach((post) => {
+							const row = rows.get(post.id);
+							if (row) row.hidden = false;
+						});
+						if (loaded + pageSize >= matchingPosts.length) {
+							observer?.disconnect();
+							sentinel.remove();
+						}
+					}, { root: results, rootMargin: '0px 0px 120px' });
+					observer.observe(sentinel);
+				}
+				const params = new URLSearchParams();
+				if (query) params.set('q', query);
+				selectedTags.forEach((tag) => params.append('tag', tag));
+				history.replaceState(null, '', params.size ? `?${params}` : '/search');
+			};
+
+			input.addEventListener('input', () => void render());
+			filters.addEventListener('click', (event) => {
+				const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-tag]') : null;
+				if (!button) return;
+				const tag = button.dataset.tag;
+				if (tag === 'all') selectedTags.clear();
+				else if (tag) selectedTags.has(tag) ? selectedTags.delete(tag) : selectedTags.add(tag);
+				syncFilters();
+				void render();
+			});
+
+			const params = new URLSearchParams(window.location.search);
+			input.value = params.get('q') || '';
+			params.getAll('tag').filter((tag) => tag !== 'all' && availableTags.has(tag)).forEach((tag) => selectedTags.add(tag));
+			syncFilters();
+			void render();
+		</script>
+	</body>
+</html>
+
+<style>
+	.search-page { max-width: var(--page-width); padding-top: 2rem; }
+	.search-topline { display: flex; justify-content: flex-end; align-items: center; padding: 0 0 1.6rem; }
+	.eyebrow, .close-link, .result-kicker, .result-meta, .filter { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; }
+	.eyebrow { margin: 0; color: var(--on-surface-variant); }
+	.close-link { display: inline-flex; align-items: center; gap: 0.6rem; }
+	.close-link svg { width: 0.85rem; height: 0.85rem; }
+	.search-layout { display: grid; grid-template-columns: minmax(18rem, 0.72fr) minmax(0, 1.7fr); gap: clamp(3rem, 8vw, 7rem); padding-top: 4.2rem; }
+	.search-input-wrap { display: flex; align-items: center; gap: 0.7rem; margin-top: 2rem; padding: 0.7rem 0; border-top: 1px solid rgba(0, 0, 0, 0.65); border-bottom: 1px solid rgba(0, 0, 0, 0.65); }
+	.search-input-wrap svg { width: 1rem; height: 1rem; }
+	.search-input-wrap input { width: 100%; border: 0; outline: 0; background: transparent; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.12em; }
+	.search-input-wrap input::placeholder { color: var(--on-surface-variant); opacity: 0.75; }
+	.filter-group { margin-top: 2rem; }
+	.filter-group > .eyebrow { margin-bottom: 0.9rem; }
+	.filters { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+	.filter { padding: 0.55rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.35); background: transparent; color: var(--on-surface); cursor: pointer; }
+	.filter.is-active, .filter:hover { border-color: var(--primary); background: var(--primary); color: var(--surface); }
+	.results { border-bottom: 1px solid rgba(0, 0, 0, 0.65); }
+	.results, .archive-list { height: calc(100vh - 20rem); min-height: 25rem; overflow-y: auto; scrollbar-color: var(--outline) transparent; scrollbar-width: thin; }
+	.archive-panel { min-width: 0; }
+	.archive-list { border-bottom: 1px solid rgba(0, 0, 0, 0.65); }
+	:global(.load-sentinel) { height: 1px; }
+	.result-item { display: grid; grid-template-columns: 3rem minmax(0, 1fr) 4rem; gap: 1.2rem; padding: 1.5rem 0; border-bottom: 1px solid rgba(0, 0, 0, 0.2); }
+	.result-item:last-child { border-bottom: 0; }
+	.result-number, .result-meta { color: var(--on-surface-variant); }
+	.result-kicker { margin: 0 0 0.6rem; color: var(--on-surface-variant); }
+	.result-item h2 { margin: 0; font-family: var(--font-display); font-size: clamp(2rem, 3.2vw, 3rem); font-weight: 400; line-height: 0.92; letter-spacing: -0.045em; }
+	.result-item h2 a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.15em; }
+	.result-description { margin: 0.65rem 0 0; color: var(--on-surface-variant); font-size: 0.88rem; line-height: 1.35; }
+	.result-meta { text-align: right; line-height: 1.8; }
+	.result-meta span { font-size: 1rem; }
+	.empty-state { margin: 0; padding: 2rem 0; font-family: var(--font-display); font-size: 1.5rem; }
+	@media (max-width: 720px) { .search-page { padding-top: 1rem; } .search-layout { grid-template-columns: 1fr; gap: 3rem; padding-top: 2.7rem; } .archive-list { height: calc(100vh - 18rem); min-height: 10rem; } }
+</style>

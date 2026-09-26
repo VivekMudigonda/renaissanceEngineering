@@ -12,7 +12,7 @@ const { compact = false } = Astro.props;
 	<nav>
 		<a class="index-link" href="/"><Icon name="mdi:menu" class="menu-mark" aria-hidden="true" /> Index </a>
 		<a class="brand" href="/"><span>Renaissance</span> <small>Engineering journal</small></a>
-		<div class="header-actions"><a href="/blog">Search</a><Icon name="mdi:magnify" class="search-mark" aria-hidden="true" /></div>
+		<a class="header-actions" href="/search" aria-label="Search the journal"><span>Search</span><Icon name="mdi:magnify" class="search-mark" aria-hidden="true" /></a>
 	</nav>
 </header>
 <style>

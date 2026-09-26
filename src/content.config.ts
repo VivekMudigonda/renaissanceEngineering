@@ -12,6 +12,7 @@ const blog = defineCollection({
 			description: z.string(),
 			author: z.string().default('Renaissance Engineer'),
 			readTime: z.string().default('5 min read'),
+			tags: z.array(z.string()).default([]),
 			// Transform string to Date object
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
