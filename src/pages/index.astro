@@ -22,7 +22,7 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 					<p class="intro">Renaissance Engineering is a journal about durable systems, clear thinking, and the beautiful burden of making things real.</p>
 				</div>
 				<figure class="front-figure">
-					<Image src={HeroImage} alt="A technical study of a measured arch" />
+					<a href="/blog" aria-label="Browse blog posts"><Image src={HeroImage} alt="A technical study of a measured arch" /></a>
 					<figcaption><span>The Noah's Ark for Thoughts</span><span>North elevation</span></figcaption>
 				</figure>
 			</section>
@@ -39,6 +39,7 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	.intro { max-width: 22rem; margin: 2.5rem 0 0; font-family: var(--font-display); font-size: clamp(1.35rem, 2.2vw, 1.75rem); line-height: 1.25; }
 	.front-figure { position: relative; margin: 0; padding: 0.6rem; background: var(--surface-container); }
 	.front-figure::before { content: ''; position: absolute; inset: -0.5rem; border: 1px solid rgba(0, 0, 0, 0.65); pointer-events: none; }
+	.front-figure a { display: block; }
 	.front-figure img { width: 100%; aspect-ratio: 1.55; object-fit: cover; mix-blend-mode: multiply; opacity: 0.8; }
 	.front-figure figcaption { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.2rem 0.1rem; font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; }
 	@media (max-width: 720px) { .front-page { padding-top: 2.4rem; } .front-grid { grid-template-columns: 1fr; padding-top: 2rem; } .front-copy h2 { font-size: clamp(2.3rem, 10vw, 3.5rem); } .thesis { margin-top: 2.5rem; } .front-figure { margin: 1rem 0.5rem 0; } .front-label, .front-footer { font-size: 0.52rem; } }
