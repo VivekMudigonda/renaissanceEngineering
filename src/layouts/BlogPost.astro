@@ -39,7 +39,7 @@ const formattedPubDate = new Intl.DateTimeFormat('en-US', {
 						<div><span>Read time</span><strong>{readTime}</strong></div>
 						<div><span>Published</span><strong>{formattedPubDate}</strong></div>
 						<div><span>Status</span><strong class="status">In the field</strong></div>
-						<div class="article-actions"><button type="button" aria-label="Save article"><Icon name="mdi:bookmark-outline" aria-hidden="true" /> <span>Save</span></button><button type="button" data-share aria-label="Share article"><Icon name="mdi:share-variant-outline" aria-hidden="true" /> <span>Share</span></button></div>
+						<div class="article-actions"><button type="button" data-copy-link aria-label="Copy article link"><Icon name="mdi:share-variant-outline" aria-hidden="true" /> <span>Copy Link</span></button></div>
 					</aside>
 				</header>
 
@@ -50,10 +50,23 @@ const formattedPubDate = new Intl.DateTimeFormat('en-US', {
 		</main>
 		<Footer />
 		<script>
-			document.querySelector('[data-share]')?.addEventListener('click', async () => {
-				if (navigator.share) await navigator.share({ title: document.title, url: window.location.href });
-				else await navigator.clipboard.writeText(window.location.href);
-			});
+			const copyLinkButton = document.querySelector('[data-copy-link]');
+			if (copyLinkButton) {
+				copyLinkButton.addEventListener('click', async () => {
+					await navigator.clipboard.writeText(window.location.href);
+					const label = copyLinkButton.querySelector('span');
+					if (label) label.textContent = 'Copied';
+					copyLinkButton.dataset.copied = 'true';
+					copyLinkButton.setAttribute('aria-label', 'Link copied');
+					copyLinkButton.disabled = true;
+					setTimeout(() => {
+						if (label) label.textContent = 'Copy Link';
+						delete copyLinkButton.dataset.copied;
+						copyLinkButton.setAttribute('aria-label', 'Copy article link');
+						copyLinkButton.disabled = false;
+					}, 1400);
+				});
+			}
 		</script>
 	</body>
 </html>
@@ -70,10 +83,14 @@ const formattedPubDate = new Intl.DateTimeFormat('en-US', {
 	.article-meta strong { font-weight: 500; }
 	.status::before { content: ''; display: inline-block; width: 0.38rem; height: 0.38rem; margin-right: 0.5rem; background: var(--secondary); }
 	.article-actions { display: flex; gap: 0.45rem; margin-top: 1.6rem; }
-	.article-actions button { padding: 0.6rem 0.75rem; border: 1px solid rgba(0, 0, 0, 0.65); background: transparent; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
+	.article-actions button { padding: 0.6rem 0.75rem; border: 1px solid rgba(0, 0, 0, 0.65); background: transparent; color: var(--on-surface); font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
 	.article-actions button { display: inline-flex; align-items: center; gap: 0.4rem; }
-	.article-actions svg { width: 0.85rem; height: 0.85rem; }
-	.article-actions button:hover { background: var(--primary); color: var(--surface); }
+	.article-actions svg { width: 0.85rem; height: 0.85rem; color: currentColor; fill: currentColor; stroke: currentColor; }
+	.article-actions button:hover:not(:disabled) { background: var(--primary); color: var(--surface); }
+	.article-actions button:hover:not(:disabled) * { color: var(--surface); }
+	.article-actions button:hover:not(:disabled) svg { fill: currentColor; stroke: currentColor; }
+	.article-actions button[data-copied='true'], .article-actions button:disabled { background: transparent; color: var(--on-surface); cursor: default; }
+	.article-actions button[data-copied='true'] svg, .article-actions button:disabled svg { fill: currentColor; stroke: currentColor; }
 	.article-rule { margin: 5rem 0 3.2rem; border-top: 1px solid rgba(0, 0, 0, 0.65); }
 	.article-hero { position: relative; margin: 0 0 3.8rem; padding: 0.7rem; border: 1px solid rgba(0, 0, 0, 0.65); background: var(--surface-container); }
 	.article-hero img { width: 100%; aspect-ratio: 1.9; object-fit: cover; mix-blend-mode: multiply; opacity: 0.82; }
