@@ -31,7 +31,6 @@ const formattedPubDate = new Intl.DateTimeFormat('en-US', {
 			<article data-pagefind-body>
 				<header class="article-header">
 					<div class="article-heading">
-						<p class="article-kicker"><span aria-hidden="true"></span> Architecture of intelligence <b>/</b> Essay 014</p>
 						<h1>{title}</h1>
 						<p class="article-description">{description}</p>
 					</div>
@@ -45,7 +44,7 @@ const formattedPubDate = new Intl.DateTimeFormat('en-US', {
 				</header>
 
 				<div class="article-rule"></div>
-				{heroImage && <figure class="article-hero"><Image src={heroImage} alt="" /><figcaption>Study 07 / Load path <span>Plate 01</span></figcaption></figure>}
+				{heroImage && <figure class="article-hero"><Image src={heroImage} alt="" /></figure>}
 				<div class="prose"><slot /></div>
 			</article>
 		</main>
@@ -62,9 +61,6 @@ const formattedPubDate = new Intl.DateTimeFormat('en-US', {
 <style>
 	.article-page { max-width: 960px; padding-top: 5rem; }
 	.article-header { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 4rem; align-items: start; }
-	.article-kicker { display: flex; align-items: center; gap: 0.7rem; margin: 0 0 1.8rem; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-surface-variant); }
-	.article-kicker span { width: 0.36rem; height: 0.36rem; background: var(--secondary); }
-	.article-kicker b { font-weight: 400; opacity: 0.45; }
 	.article-heading h1 { max-width: 700px; margin: 0; font-family: var(--font-display); font-size: clamp(3.7rem, 7vw, 6.2rem); font-weight: 400; line-height: 0.86; letter-spacing: -0.055em; }
 	.article-description { max-width: 650px; margin: 1.5rem 0 0; font-family: var(--font-display); font-size: clamp(1.4rem, 2.5vw, 2rem); line-height: 1.2; }
 	.article-meta { border-left: 1px solid rgba(0, 0, 0, 0.7); padding-left: 1.4rem; }
